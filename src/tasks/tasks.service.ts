@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 
@@ -21,5 +21,28 @@ export class TasksService {
                 createdAt: true
             }
         });
+    }
+
+    async getTask(userId: number, taskId: number) {
+        const task = await this.prisma.task.findFirst({
+            where: {
+                id: taskId,
+                userId: userId
+            }
+        });
+        if (!task) {
+            throw new NotFoundException('Task not found');
+        }
+        const {userId: _, ...taskData} = task;
+        return taskData;
+    }
+
+    async getAllTasks(userId: number) {
+        const tasks = await this.prisma.task.findMany({
+            where: {
+                userId: userId
+            }
+        });
+        return tasks.map(({userId: _, ...taskData}) => taskData);
     }
 }
